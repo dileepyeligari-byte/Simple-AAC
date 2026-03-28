@@ -64,8 +64,8 @@
     <div class="controls">
         <button class="btn btn-lang" onclick="toggleLanguage()" id="langBtn">తెలుగు Mode</button>
         <button class="btn btn-play" onclick="playSentence()">▶ PLAY</button>
-        <button class="btn btn-del" onclick="undoLast()">⌫</button>
-        <button class="btn btn-clear" onclick="clearSentence()">✖</button>
+        <button class="btn btn-del" onclick="undoLast()" aria-label="Erase Last">⌫</button>
+        <button class="btn btn-clear" onclick="clearSentence()" aria-label="Clear Everything">✖</button>
     </div>
     <div id="sentence-bar"></div>
     <div id="filters">
@@ -81,7 +81,7 @@
 
 <div class="grid" id="cardGrid"></div>
 
-<button class="fab" onclick="toggleAdmin()">⚙️</button>
+<button class="fab" onclick="toggleAdmin()" aria-label="Parent Settings">⚙️</button>
 
 <div id="admin-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
