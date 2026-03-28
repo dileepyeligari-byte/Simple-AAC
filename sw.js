@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aac-cache-v5';
+const CACHE_NAME = 'aac-cache-v7';
 const URLS_TO_CACHE = ['index.html', 'manifest.json', 'sw.js', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', event => {

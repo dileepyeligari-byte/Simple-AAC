@@ -462,26 +462,53 @@
     function loadAdminList() {
         const list = document.getElementById('admin-card-list');
         list.innerHTML = '';
+        const currentLevel = parseInt(localStorage.getItem('aac_level') || '4');
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
         store.openCursor().onsuccess = (e) => {
             const cursor = e.target.result;
             if (cursor) {
                 const card = cursor.value;
-                const div = document.createElement('div');
-                div.className = 'manage-item';
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        ${card.emoji || '🖼️'} <strong>${card.en} / ${card.te}</strong>
-                    </div>
-                    <div class="manage-actions">
-                        <button class="btn-edit" onclick="editCard('${card.id}')">✏️ Edit</button>
-                        <button class="btn-delete" onclick="deleteCard('${card.id}')">🗑️ Delete</button>
-                    </div>
-                `;
-                list.appendChild(div);
+                const cardLevel = card.level || 1;
+                
+                // Only show cards at or below current level for management (as requested)
+                if (cardLevel <= currentLevel) {
+                    const div = document.createElement('div');
+                    div.className = 'manage-item';
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${card.emoji || '🖼️'} <span style="font-size:0.8rem;">${card.en} / ${card.te}</span>
+                        </div>
+                        <div class="manage-actions" style="display:flex; align-items:center; gap:5px;">
+                            <select onchange="updateCardLevel('${card.id}', this.value)" style="padding:4px; font-size:0.7rem;">
+                                <option value="1" ${cardLevel == 1 ? 'selected' : ''}>L1</option>
+                                <option value="2" ${cardLevel == 2 ? 'selected' : ''}>L2</option>
+                                <option value="3" ${cardLevel == 3 ? 'selected' : ''}>L3</option>
+                                <option value="4" ${cardLevel == 4 ? 'selected' : ''}>L4</option>
+                            </select>
+                            <button class="btn-edit" onclick="editCard('${card.id}')" style="padding:4px 8px;">✏️</button>
+                            <button class="btn-delete" onclick="deleteCard('${card.id}')" style="padding:4px 8px;">🗑️</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                }
                 cursor.continue();
             }
+        };
+    }
+
+    function updateCardLevel(id, newLevel) {
+        const tx = db.transaction("cards", "readwrite");
+        const store = tx.objectStore("cards");
+        const req = store.get(id);
+        req.onsuccess = () => {
+            const card = req.result;
+            card.level = parseInt(newLevel);
+            store.put(card);
+            tx.oncomplete = () => {
+                loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+                // No alert to keep it smooth, just update grid
+            };
         };
     }
 
