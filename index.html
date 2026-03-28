@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="page-title">AAC</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <style>
+        :root { 
+            --bg: #f4f7f6; --text: #2c3e50; --primary: #4CAF50;
+            --cat-people: #FFD1DC; --cat-needs: #AEC6CF; --cat-emotions: #FDFD96; 
+            --cat-actions: #B7E2A8; --cat-items: #E6B0AA; --cat-social: #D7BDE2;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 8px; user-select: none; color: var(--text); overflow-x: hidden; }
+        
+        /* Top UI */
+        #top-ui { position: sticky; top: 0; background: var(--bg); z-index: 50; padding-bottom: 5px; }
+        .controls { display: flex; gap: 8px; margin-bottom: 8px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: bold; font-size: 1rem; color: white; cursor: pointer; }
+        .btn-lang { background: #2196F3; }
+        .btn-play { background: #4CAF50; flex: 2; font-size: 1.2rem; }
+        .btn-del { background: #FF9800; flex: 0.5; }
+        .btn-clear { background: #f44336; flex: 0.5; }
+
+        #sentence-bar { background: white; min-height: 70px; border-radius: 16px; display: flex; align-items: center; padding: 10px; gap: 10px; overflow-x: auto; border: 3px solid #dee2e6; margin-bottom: 8px; }
+        .sentence-item { font-size: 2.5rem; transition: all 0.2s; min-width: 45px; text-align: center; border-radius: 8px; }
+        .speaking-now { transform: scale(1.3); background: rgba(76, 175, 80, 0.2); box-shadow: 0 0 10px #4CAF50; }
+
+        /* Filters */
+        #filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 5px; scrollbar-width: none; }
+        .filter-chip { padding: 8px 16px; border-radius: 20px; background: #e0e0e0; border: none; font-weight: bold; white-space: nowrap; cursor: pointer; }
+        .filter-chip.active { background: #333; color: white; }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding-bottom: 80px; }
+        @media (max-width: 600px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+        
+        .card { background: white; border-radius: 10px; padding: 6px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; border: 3px solid transparent; display: flex; flex-direction: column; justify-content: center; transition: transform 0.1s; }
+        .card:active { transform: scale(0.92); }
+        .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; }
+        .card-emoji { font-size: 2rem; margin-bottom: 2px; }
+        .card-label { font-weight: 800; font-size: 0.65rem; line-height: 1.1; word-break: break-word; }
+        
+        /* Categories */
+        .cat-people { border-color: var(--cat-people); } .cat-needs { border-color: var(--cat-needs); }
+        .cat-emotions { border-color: var(--cat-emotions); } .cat-actions { border-color: var(--cat-actions); }
+        .cat-items { border-color: var(--cat-items); } .cat-social { border-color: var(--cat-social); }
+
+        /* Admin Panels */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #37474f; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; }
+        #admin-modal { display: none; position: fixed; inset: 0; background: white; z-index: 200; padding: 20px; overflow-y: auto; }
+        .input-group { margin-bottom: 12px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* Manage List in Admin */
+        .manage-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .manage-item { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        .manage-actions button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; margin-left: 5px; }
+        .btn-edit { background: #2196F3; } .btn-delete { background: #f44336; }
+
+        /* Parent Gate Pulse */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .gate-active { animation: pulse 0.5s infinite; border: 4px solid #4CAF50 !important; background: #2c3e50 !important; }
+    </style>
+</head>
+<body>
+
+<div id="top-ui">
+    <div class="controls">
+        <button class="btn btn-lang" onclick="toggleLanguage()" id="langBtn">తెలుగు Mode</button>
+        <button class="btn btn-play" onclick="playSentence()">▶ PLAY</button>
+        <button class="btn btn-del" onclick="undoLast()">⌫</button>
+        <button class="btn btn-clear" onclick="clearSentence()">✖</button>
+    </div>
+    <div id="sentence-bar"></div>
+    <div id="filters">
+        <button class="filter-chip active" onclick="filterCards('all')">All</button>
+        <button class="filter-chip" onclick="filterCards('people')" style="background:var(--cat-people); color:black;">People</button>
+        <button class="filter-chip" onclick="filterCards('needs')" style="background:var(--cat-needs); color:black;">Needs</button>
+        <button class="filter-chip" onclick="filterCards('emotions')" style="background:var(--cat-emotions); color:black;">Emotions</button>
+        <button class="filter-chip" onclick="filterCards('actions')" style="background:var(--cat-actions); color:black;">Actions</button>
+        <button class="filter-chip" onclick="filterCards('items')" style="background:var(--cat-items); color:black;">Items</button>
+        <button class="filter-chip" onclick="filterCards('social')" style="background:var(--cat-social); color:black;">Social</button>
+    </div>
+</div>
+
+<div class="grid" id="cardGrid"></div>
+
+<button class="fab" id="adminBtn" onmousedown="startGate()" onmouseup="stopGate()" ontouchstart="startGate()" ontouchend="stopGate()">⚙️</button>
+
+<div id="admin-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 id="admin-title">Add/Edit Card</h2>
+        <button class="btn btn-clear" style="flex:none; padding:10px 20px;" onclick="toggleAdmin()">Close</button>
+    </div>
+
+    <div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; border: 2px solid #ccc;">
+        <h3 id="form-header" style="margin-top:0;">Create New Card</h3>
+        <input type="hidden" id="editId">
+        
+        <div class="input-group">
+            <label>Upload Photo (Overrides Emoji):</label>
+            <input type="file" id="imgInput" accept="image/*">
+        </div>
+        <div class="input-group">
+            <input type="text" id="emojiInput" placeholder="Emoji (e.g. 🍎)" maxlength="2">
+        </div>
+        <div class="input-group">
+            <input type="text" id="teInput" placeholder="Telugu Text (e.g. ఆపిల్)">
+        </div>
+        <div class="input-group">
+            <input type="text" id="enInput" placeholder="English Text (e.g. Apple)">
+        </div>
+        <div class="input-group">
+            <select id="catInput">
+                <option value="people">People</option><option value="needs">Needs</option>
+                <option value="emotions">Emotions</option><option value="actions">Actions</option>
+                <option value="items">Items</option><option value="social">Social</option>
+            </select>
+        </div>
+        
+        <div style="background:#e0e0e0; padding:15px; border-radius:8px; text-align:center; margin-bottom:15px;">
+            <p id="recStatus" style="margin-top:0; font-weight:bold;">Audio: Text-to-Speech (Default)</p>
+            <button id="recBtn" class="btn btn-del" style="width:100%;" onclick="startRecording()">🎤 Record Custom Voice</button>
+            <button id="clearAudioBtn" class="btn btn-clear" style="width:100%; margin-top:8px; display:none;" onclick="clearAudio()">🗑️ Remove Voice (Use TTS)</button>
+        </div>
+
+        <button class="btn btn-play" style="width:100%;" onclick="saveCard()">💾 Save Card</button>
+        <button id="cancelEditBtn" class="btn btn-clear" style="width:100%; margin-top:8px; display:none;" onclick="resetForm()">Cancel Edit</button>
+    </div>
+
+    <hr>
+    <h3>Parent Settings</h3>
+    <div class="input-group">
+        <label>Learning Level (Progressive Step):</label>
+        <select id="levelSelect" onchange="updateLevel()">
+            <option value="1">Level 1: Foundation (Needs & Self)</option>
+            <option value="2">Level 2: Building (Actions & Emotions)</option>
+            <option value="3">Level 3: Explorer (Questions & Items)</option>
+            <option value="4" selected>Level 4: Master (Full Vocabulary)</option>
+        </select>
+        <small style="color:#666; display:block; margin-top:5px;">Levels filter the cards to reduce the learning curve for the child.</small>
+    </div>
+
+    <hr>
+    <h3>Manage Existing Cards</h3>
+    <div class="manage-list" id="admin-card-list">
+        </div>
+</div>
+
+<script>
+    let db;
+    let isTelugu = true;
+    let sentence = [];
+    let mediaRecorder;
+    let audioChunks = [];
+    let currentAudioBlob = null;
+    let isPlaying = false;
+    let userNameEn = "Child";
+    let userNameTe = "పిల్లవాడు";
+    let gateTimer;
+
+    // --- Parent Gate Logic ---
+    function startGate() {
+        const btn = document.getElementById('adminBtn');
+        btn.classList.add('gate-active');
+        gateTimer = setTimeout(() => {
+            btn.classList.remove('gate-active');
+            toggleAdmin();
+        }, 2000); // 2 second hold
+    }
+    function stopGate() {
+        clearTimeout(gateTimer);
+        document.getElementById('adminBtn').classList.remove('gate-active');
+    }
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                console.log('SW registered:', registration);
+            }).catch(error => {
+                console.log('SW registration failed:', error);
+            });
+        });
+    }
+
+    // --- Username Request Logic ---
+    function initializeUser() {
+        userNameEn = localStorage.getItem('aac_user_en');
+        userNameTe = localStorage.getItem('aac_user_te');
+        
+        if (!userNameEn || !userNameTe) {
+            userNameEn = prompt("Welcome! Please enter the child's name (English):", "User") || "User";
+            userNameTe = prompt("Please enter the child's name in Telugu (if applicable):", userNameEn) || userNameEn;
+            localStorage.setItem('aac_user_en', userNameEn);
+            localStorage.setItem('aac_user_te', userNameTe);
+        }
+        document.getElementById('page-title').innerText = `AAC`;
+        
+        // Initialize Level
+        let savedLevel = localStorage.getItem('aac_level') || '4';
+        document.getElementById('levelSelect').value = savedLevel;
+    }
+
+    function updateLevel() {
+        const lvl = document.getElementById('levelSelect').value;
+        localStorage.setItem('aac_level', lvl);
+        loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+        alert(`Learning Level updated to ${lvl}. The icons have been filtered.`);
+    }
+
+    // --- DB & Starter Cards ---
+    function getStarterDeck() {
+        return [
+            // LEVEL 1: Foundation (Core Needs)
+            { id:'d1', te:'నేను', en:'I', emoji:'🙋‍♂️', cat:'people', level: 1 },
+            { id:'d37', te:'నాకు', en:'Me', emoji:'☝️', cat:'people', level: 1 },
+            { id:'d4', te:'నాన్న', en:'Dad', emoji:'👨', cat:'people', level: 1 },
+            { id:'d3', te:'అమ్మ', en:'Mom', emoji:'👩', cat:'people', level: 1 },
+            { id:'d7', te:'అన్నం', en:'Food', emoji:'🍚', cat:'needs', level: 1 },
+            { id:'d8', te:'నీళ్లు', en:'Water', emoji:'💧', cat:'needs', level: 1 },
+            { id:'d31', te:'కావాలి', en:'Want', emoji:'🤲', cat:'social', level: 1 },
+            { id:'d32', te:'వద్దు', en:'No / Don\'t Want', emoji:'🙅‍♂️', cat:'social', level: 1 },
+            { id:'d10', te:'టాయిలెట్', en:'Toilet', emoji:'🚽', cat:'needs', level: 1 },
+            { id:'d41', te:'ఇంకా', en:'More', emoji:'🔄', cat:'social', level: 1 },
+            { id:'d49', te:'అయిపోయింది', en:'Done', emoji:'🏁', cat:'social', level: 1 },
+
+            // LEVEL 2: Building (Daily Actions & Simple Emotions)
+            { id:'d2', te:'నువ్వు', en:'You', emoji:'🧒', cat:'people', level: 2 },
+            { id:'d5', te: userNameTe, en: userNameEn, emoji:'👦', cat:'people', level: 2 },
+            { id:'d19', te:'ఆటలు', en:'Play', emoji:'🧸', cat:'actions', level: 2 },
+            { id:'d20', te:'చూడు', en:'Watch', emoji:'📺', cat:'actions', level: 2 },
+            { id:'d23', te:'వెళ్ళు', en:'Go', emoji:'🚶', cat:'actions', level: 2 },
+            { id:'d24', te:'ఆగు', en:'Stop', emoji:'🛑', cat:'actions', level: 2 },
+            { id:'d38', te:'ఇవ్వు', en:'Give', emoji:'🫴', cat:'actions', level: 2 },
+            { id:'d39', te:'తిను', en:'Eat', emoji:'😋', cat:'actions', level: 2 },
+            { id:'d40', te:'తాగు', en:'Drink', emoji:'🥤', cat:'actions', level: 2 },
+            { id:'d13', te:'సంతోషం', en:'Happy', emoji:'😊', cat:'emotions', level: 2 },
+            { id:'d14', te:'బాధ', en:'Sad', emoji:'😢', cat:'emotions', level: 2 },
+            { id:'d33', te:'అవును', en:'Yes', emoji:'✅', cat:'social', level: 2 },
+            { id:'d34', te:'కాదు', en:'No', emoji:'❌', cat:'social', level: 2 },
+            { id:'d35', te:'సహాయం', en:'Help', emoji:'🤝', cat:'social', level: 2 },
+            { id:'d11', te:'నిద్ర', en:'Sleep', emoji:'😴', cat:'needs', level: 2 },
+
+            // LEVEL 3: Explorer (Specifics, Body, Questions)
+            { id:'d42', te:'పళ్ళు తోము', en:'Brush', emoji:'🪥', cat:'needs', level: 3 },
+            { id:'d62', te:'కడుపు', en:'Stomach', emoji:'🍱', cat:'needs', level: 3 },
+            { id:'d63', te:'తల', en:'Head', emoji:'👤', cat:'needs', level: 3 },
+            { id:'d43', te:'మందు', en:'Medicine', emoji:'💊', cat:'needs', level: 3 },
+            { id:'d52', te:'వేడి', en:'Hot', emoji:'🔥', cat:'needs', level: 3 },
+            { id:'d53', te:'చల్లని', en:'Cold', emoji:'❄️', cat:'needs', level: 3 },
+            { id:'d15', te:'కోపం', en:'Angry', emoji:'😡', cat:'emotions', level: 3 },
+            { id:'d16', te:'భయం', en:'Scared', emoji:'😨', cat:'emotions', level: 3 },
+            { id:'d17', te:'నొప్పి', en:'Hurt', emoji:'🤕', cat:'emotions', level: 3 },
+            { id:'d44', te:'నచ్చింది', en:'Like', emoji:'❤️', cat:'emotions', level: 3 },
+            { id:'d45', te:'నచ్చలేదు', en:'Dislike', emoji:'👎', cat:'emotions', level: 3 },
+            { id:'d54', te:'కౌగిలింత', en:'Hug', emoji:'🫂', cat:'emotions', level: 3 },
+            { id:'d55', te:'ఎక్కడ', en:'Where?', emoji:'❓', cat:'social', level: 3 },
+            { id:'d56', te:'ఏమిటి', en:'What?', emoji:'👁️‍🗨️', cat:'social', level: 3 },
+            { id:'d50', te:'ఆగు/వేచి', en:'Wait', emoji:'⏳', cat:'social', level: 3 },
+            { id:'d51', te:'నిశ్శబ్దంగా', en:'Quiet', emoji:'🤫', cat:'social', level: 3 },
+            { id:'d64', te:'ఇల్లు', en:'Home', emoji:'🏠', cat:'actions', level: 3 },
+            { id:'d65', te:'బడి', en:'School', emoji:'🏫', cat:'actions', level: 3 },
+            { id:'d66', te:'పార్క్', en:'Park', emoji:'🌳', cat:'actions', level: 3 },
+
+            // LEVEL 4: Master (Descriptive & Detailed Items)
+            { id:'d6', te:'తాత', en:'Grandpa', emoji:'👴', cat:'people', level: 4 },
+            { id:'d12', te:'స్నానం', en:'Bath', emoji:'🛁', cat:'needs', level: 4 },
+            { id:'d18', te:'అలసిపోయాను', en:'Tired', emoji:'🥱', cat:'emotions', level: 4 },
+            { id:'d21', te:'నడక', en:'Walk', emoji:'🚶‍♂️', cat:'actions', level: 4 },
+            { id:'d22', te:'కూర్చో', en:'Sit', emoji:'🪑', cat:'actions', level: 4 },
+            { id:'d25', te:'ఆపిల్', en:'Apple', emoji:'🍎', cat:'items', level: 4 },
+            { id:'d26', te:'బొమ్మ', en:'Toy', emoji:'🚗', cat:'items', level: 4 },
+            { id:'d27', te:'పుస్తకం', en:'Book', emoji:'📚', cat:'items', level: 4 },
+            { id:'d28', te:'ఫోన్', en:'Phone', emoji:'📱', cat:'items', level: 4 },
+            { id:'d29', te:'బంతి', en:'Ball', emoji:'⚽', cat:'items', level: 4 },
+            { id:'d30', te:'బూట్లు', en:'Shoes', emoji:'👟', cat:'items', level: 4 },
+            { id:'d36', te:'ధన్యవాదాలు', en:'Thanks', emoji:'🙏', cat:'social', level: 4 },
+            { id:'d58', te:'ఎరుపు', en:'Red', emoji:'🔴', cat:'items', level: 4 },
+            { id:'d59', te:'నీలం', en:'Blue', emoji:'🔵', cat:'items', level: 4 },
+            { id:'d60', te:'ఆకుపచ్చ', en:'Green', emoji:'🟢', cat:'items', level: 4 },
+            { id:'d61', te:'పసుపు', en:'Yellow', emoji:'🟡', cat:'items', level: 4 },
+            { id:'d70', te:'పెద్ద', en:'Big', emoji:'🐘', cat:'social', level: 4 },
+            { id:'d71', te:'చిన్న', en:'Small', emoji:'🐭', cat:'social', level: 4 },
+            { id:'d69', te:'మంచం', en:'Bed', emoji:'🛏️', cat:'items', level: 4 }
+        ];
+    }
+
+    initializeUser();
+
+    const request = indexedDB.open("UserAAC_DB", 1);
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        if (!db.objectStoreNames.contains("cards")) {
+            db.createObjectStore("cards", { keyPath: "id" });
+        }
+    };
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        checkAndSeedDB();
+    };
+
+    function checkAndSeedDB() {
+        const tx = db.transaction("cards", "readwrite");
+        const store = tx.objectStore("cards");
+        const starter = getStarterDeck();
+        
+        // Smarter Sync: Add missing IDs without wiping custom cards
+        starter.forEach(c => {
+            const req = store.get(c.id);
+            req.onsuccess = () => {
+                if (!req.result) store.add(c);
+            };
+        });
+        
+        tx.oncomplete = () => {
+            loadCards('all');
+        }
+    }
+
+    // --- UI Logic ---
+    function toggleLanguage() {
+        window.speechSynthesis.cancel();
+        isTelugu = !isTelugu;
+        document.getElementById('langBtn').innerText = isTelugu ? "తెలుగు Mode" : "English Mode";
+        speakText(isTelugu ? "తెలుగు" : "English");
+        loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+    }
+
+    function loadCards(filterCat) {
+        const grid = document.getElementById('cardGrid');
+        grid.innerHTML = '';
+        const currentLevel = parseInt(localStorage.getItem('aac_level') || '4');
+        const store = db.transaction("cards", "readonly").objectStore("cards");
+        
+        store.openCursor().onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+                const card = cursor.value;
+                const cardLevel = card.level || 1; // Default to 1 if not set
+                
+                if ((filterCat === 'all' || card.cat === filterCat) && cardLevel <= currentLevel) {
+                    renderCard(card, grid);
+                }
+                cursor.continue();
+            }
+        };
+    }
+
+    function renderCard(card, container) {
+        const div = document.createElement('div');
+        div.className = `card cat-${card.cat}`;
+        div.onclick = () => handleCardClick(card);
+        
+        let visualHtml = card.img ? `<img src="${URL.createObjectURL(card.img)}">` : `<div class="card-emoji">${card.emoji || '📦'}</div>`;
+        let label = isTelugu ? card.te : card.en;
+        
+        div.innerHTML = `
+            ${visualHtml}
+            <div class="card-label">${label}</div>
+        `;
+        container.appendChild(div);
+    }
+
+    function filterCards(cat) {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        if (event) event.target.classList.add('active');
+        loadCards(cat);
+    }
+
+    // --- Playback Logic ---
+    function handleCardClick(card) {
+        if (navigator.vibrate) navigator.vibrate(40); // Haptic
+        sentence.push(card);
+        updateSentenceUI();
+        playSingle(card);
+    }
+
+    function updateSentenceUI() {
+        const bar = document.getElementById('sentence-bar');
+        bar.innerHTML = '';
+        sentence.forEach((card, index) => {
+            const div = document.createElement('div');
+            div.className = 'sentence-item';
+            div.id = `sent-${index}`;
+            div.innerHTML = card.img ? `<img src="${URL.createObjectURL(card.img)}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">` : (card.emoji || '📦');
+            bar.appendChild(div);
+        });
+        bar.scrollLeft = bar.scrollWidth;
+    }
+
+    function undoLast() { sentence.pop(); updateSentenceUI(); }
+    function clearSentence() { window.speechSynthesis.cancel(); sentence = []; updateSentenceUI(); }
+
+    async function playSentence() {
+        if (sentence.length === 0 || isPlaying) return;
+        isPlaying = true;
+        window.speechSynthesis.cancel();
+
+        for (let i = 0; i < sentence.length; i++) {
+            const el = document.getElementById(`sent-${i}`);
+            if(el) el.classList.add('speaking-now');
+            
+            await playSingleAsync(sentence[i]);
+            
+            if(el) el.classList.remove('speaking-now');
+            await new Promise(r => setTimeout(r, 150)); 
+        }
+        isPlaying = false;
+    }
+
+    function playSingle(card) {
+        window.speechSynthesis.cancel();
+        if (card.audio) {
+            const audio = new Audio(URL.createObjectURL(card.audio));
+            audio.onerror = () => speakText(isTelugu ? card.te : card.en); // Fallback to TTS if blob fails
+            audio.play();
+        } else {
+            speakText(isTelugu ? card.te : card.en);
+        }
+    }
+
+    function playSingleAsync(card) {
+        return new Promise((resolve) => {
+            if (card.audio) {
+                const audio = new Audio(URL.createObjectURL(card.audio));
+                audio.onended = resolve;
+                audio.onerror = () => { speakText(isTelugu ? card.te : card.en); setTimeout(resolve, 1000); };
+                audio.play();
+            } else {
+                const utterance = new SpeechSynthesisUtterance(isTelugu ? card.te : card.en);
+                utterance.lang = isTelugu ? 'te-IN' : 'en-US';
+                utterance.rate = 0.85;
+                utterance.onend = resolve;
+                utterance.onerror = resolve;
+                window.speechSynthesis.speak(utterance);
+                setTimeout(resolve, 2000); // Safety timeout
+            }
+        });
+    }
+
+    function speakText(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = isTelugu ? 'te-IN' : 'en-US';
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // --- Admin: Edit, Delete & Record Logic ---
+    function toggleAdmin() {
+        const modal = document.getElementById('admin-modal');
+        if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+            resetForm();
+        } else {
+            modal.style.display = 'block';
+            loadAdminList();
+        }
+    }
+
+    function loadAdminList() {
+        const list = document.getElementById('admin-card-list');
+        list.innerHTML = '';
+        const store = db.transaction("cards", "readonly").objectStore("cards");
+        
+        store.openCursor().onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+                const card = cursor.value;
+                const div = document.createElement('div');
+                div.className = 'manage-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${card.emoji || '🖼️'} <strong>${card.en} / ${card.te}</strong>
+                    </div>
+                    <div class="manage-actions">
+                        <button class="btn-edit" onclick="editCard('${card.id}')">✏️ Edit</button>
+                        <button class="btn-delete" onclick="deleteCard('${card.id}')">🗑️ Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+                cursor.continue();
+            }
+        };
+    }
+
+    // Form Controls
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('teInput').value = '';
+        document.getElementById('enInput').value = '';
+        document.getElementById('emojiInput').value = '';
+        document.getElementById('imgInput').value = '';
+        document.getElementById('form-header').innerText = "Create New Card";
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        clearAudio();
+    }
+
+    function editCard(id) {
+        const tx = db.transaction("cards", "readonly");
+        const req = tx.objectStore("cards").get(id);
+        req.onsuccess = () => {
+            const card = req.result;
+            document.getElementById('editId').value = card.id;
+            document.getElementById('teInput').value = card.te;
+            document.getElementById('enInput').value = card.en;
+            document.getElementById('emojiInput').value = card.emoji;
+            document.getElementById('catInput').value = card.cat;
+            document.getElementById('form-header').innerText = `Editing: ${card.en}`;
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            
+            if (card.audio) {
+                currentAudioBlob = card.audio;
+                document.getElementById('recStatus').innerText = "🔊 Has Custom Voice";
+                document.getElementById('clearAudioBtn').style.display = 'block';
+            } else {
+                clearAudio();
+            }
+            
+            // Scroll to top of modal
+            document.getElementById('admin-modal').scrollTop = 0;
+        };
+    }
+
+    function deleteCard(id) {
+        if(confirm("Are you sure you want to delete this card?")) {
+            const tx = db.transaction("cards", "readwrite");
+            tx.objectStore("cards").delete(id);
+            tx.oncomplete = () => {
+                loadAdminList();
+                loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+            };
+        }
+    }
+
+    // Recording Controls
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                currentAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                document.getElementById('recStatus').innerText = "✅ New Voice Recorded!";
+                document.getElementById('clearAudioBtn').style.display = 'block';
+            };
+            
+            mediaRecorder.start();
+            const btn = document.getElementById('recBtn');
+            btn.innerText = "🛑 Stop Recording";
+            btn.style.background = "#333";
+            btn.onclick = stopRecording;
+        } catch (err) {
+            alert("Microphone access denied. Text-to-Speech will be used.");
+        }
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        const btn = document.getElementById('recBtn');
+        btn.innerText = "🎤 Re-Record Voice";
+        btn.style.background = "#FF9800";
+        btn.onclick = startRecording;
+    }
+
+    function clearAudio() {
+        currentAudioBlob = null;
+        document.getElementById('recStatus').innerText = "Audio: Text-to-Speech (Default)";
+        document.getElementById('clearAudioBtn').style.display = 'none';
+        document.getElementById('recBtn').innerText = "🎤 Record Custom Voice";
+        document.getElementById('recBtn').style.background = "#FF9800";
+        document.getElementById('recBtn').onclick = startRecording;
+    }
+
+    // Save Logic (Handles both Add & Edit)
+    function saveCard() {
+        const editId = document.getElementById('editId').value;
+        const id = editId ? editId : 'custom_' + Date.now();
+        const imgFile = document.getElementById('imgInput').files[0];
+        
+        const cardData = {
+            id: id,
+            te: document.getElementById('teInput').value || '...',
+            en: document.getElementById('enInput').value || '...',
+            emoji: document.getElementById('emojiInput').value,
+            cat: document.getElementById('catInput').value,
+            audio: currentAudioBlob
+        };
+
+        const tx = db.transaction("cards", "readwrite");
+        const store = tx.objectStore("cards");
+
+        if (imgFile) {
+            cardData.img = imgFile;
+            store.put(cardData);
+        } else if (editId) {
+            // Keep old image if not uploading a new one during edit
+            const getReq = store.get(editId);
+            getReq.onsuccess = () => {
+                cardData.img = getReq.result.img;
+                store.put(cardData);
+            };
+        } else {
+            cardData.img = null;
+            store.put(cardData);
+        }
+
+        tx.oncomplete = () => {
+            alert(editId ? "Card Updated!" : "New Card Saved!");
+            resetForm();
+            loadAdminList();
+            loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+        };
+    }
+</script>
+</body>
+</html>
