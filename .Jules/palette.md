@@ -1,3 +1,3 @@
-## 2024-05-18 - Missing ARIA labels pattern
-**Learning:** This app heavily uses icon-only buttons (like Erase Last, Clear Everything, Parent Settings FAB, and dynamically created Edit/Delete buttons) without accompanying ARIA labels, creating accessibility issues for screen reader users.
-**Action:** When working on this application, always review icon-only buttons and dynamically created elements in the admin modal to ensure they have descriptive `aria-label` attributes.
+## 2024-05-24 - Interactive Elements Need Keyboard Support
+**Learning:** Custom interactive elements (like the AAC cards rendered as `div`s) must explicitly implement keyboard support (`role="button"`, `tabindex="0"`, and `keydown` event listeners for Enter/Space keys) to be accessible for users who rely on switch controls or keyboard navigation.
+**Action:** Always add keyboard accessibility attributes and event listeners when using non-semantic HTML elements for interactivity.
