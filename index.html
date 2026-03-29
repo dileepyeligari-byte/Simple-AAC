@@ -668,15 +668,13 @@
     function syncMemoryCache() {
         allCards = [];
         const store = db.transaction("cards", "readonly").objectStore("cards");
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) { allCards.push(cursor.value); cursor.continue(); }
-            else {
-                const activeCatEl = document.querySelector('.filter-chip.active');
-                const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
-                loadCards(catText);
-                if (document.getElementById('admin-modal').style.display === 'block') loadAdminList();
-            }
+        // ⚡ Bolt: Prefer getAll() over openCursor() for bulk retrieval to minimize event loop overhead
+        store.getAll().onsuccess = (e) => {
+            allCards = e.target.result || [];
+            const activeCatEl = document.querySelector('.filter-chip.active');
+            const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
+            loadCards(catText);
+            if (document.getElementById('admin-modal').style.display === 'block') loadAdminList();
         };
     }
 

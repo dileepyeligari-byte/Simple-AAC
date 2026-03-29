@@ -211,15 +211,14 @@
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Prefer getAll() over openCursor() for bulk retrieval to minimize event loop overhead
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result || [];
+            cards.forEach(card => {
                 if (filterCat === 'all' || card.cat === filterCat) {
                     renderCard(card, grid);
                 }
-                cursor.continue();
-            }
+            });
         };
     }
 
@@ -353,10 +352,10 @@
         list.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Prefer getAll() over openCursor() for bulk retrieval to minimize event loop overhead
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result || [];
+            cards.forEach(card => {
                 const div = document.createElement('div');
                 div.className = 'manage-item';
                 div.innerHTML = `
@@ -369,8 +368,7 @@
                     </div>
                 `;
                 list.appendChild(div);
-                cursor.continue();
-            }
+            });
         };
     }
 
