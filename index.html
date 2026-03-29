@@ -135,6 +135,7 @@
         .utility-row { display: none; }
 
         #sentence-bar::-webkit-scrollbar { display: none; }
+        .empty-placeholder { color: #90a4ae; font-weight: 600; font-size: 1.2rem; margin: auto; font-style: italic; }
         .sentence-item { 
             font-size: 2.8rem; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -395,7 +396,9 @@
 
 <div id="top-ui">
     <div class="main-display">
-        <div id="sentence-bar"></div>
+        <div id="sentence-bar">
+            <div class="empty-placeholder">Select cards to build a sentence...</div>
+        </div>
         <div class="action-container">
             <div class="action-group">
                 <button class="btn btn-play" onclick="playSentence()">
@@ -751,6 +754,10 @@
     function updateSentenceUI() {
         const bar = document.getElementById('sentence-bar');
         bar.innerHTML = '';
+        if (sentence.length === 0) {
+            bar.innerHTML = '<div class="empty-placeholder">Select cards to build a sentence...</div>';
+            return;
+        }
         // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
         const fragment = document.createDocumentFragment();
         sentence.forEach((card, i) => {
