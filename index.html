@@ -135,6 +135,7 @@
         .utility-row { display: none; }
 
         #sentence-bar::-webkit-scrollbar { display: none; }
+        .empty-placeholder { color: #90a4ae; font-weight: 600; font-size: 1.2rem; margin: auto; font-style: italic; }
         .sentence-item { 
             font-size: 2.8rem; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -223,6 +224,7 @@
             min-height: 88px; /* -20% from 110 */
         }
         .card:active { transform: scale(0.96) rotate(-0.5deg); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
         .card img { width: 85%; height: auto; aspect-ratio: 1/1; object-fit: contain; border-radius: 12px; margin-bottom: 6px; }
         .card-emoji { font-size: 2.2rem; margin-bottom: 4px; }
         .card-label { 
@@ -394,7 +396,9 @@
 
 <div id="top-ui">
     <div class="main-display">
-        <div id="sentence-bar"></div>
+        <div id="sentence-bar">
+            <div class="empty-placeholder">Select cards to build a sentence...</div>
+        </div>
         <div class="action-container">
             <div class="action-group">
                 <button class="btn btn-play" onclick="playSentence()">
@@ -721,13 +725,22 @@
     function renderCard(card, container) {
         const div = document.createElement('div');
         div.className = `card cat-${card.cat}`;
+        div.setAttribute('role', 'button');
+        div.tabIndex = 0;
         div.onclick = () => handleCardClick(card);
-        let visual = `<div class="card-emoji">${card.emoji || '📦'}</div>`;
+        div.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(card);
+            }
+        };
+        div.setAttribute('aria-label', isTelugu ? card.te : card.en);
+        let visual = `<div class="card-emoji" aria-hidden="true">${card.emoji || '📦'}</div>`;
         if (card.img) {
             const url = URL.createObjectURL(card.img);
-            visual = `<img src="${url}" onload="URL.revokeObjectURL(this.src)">`;
+            visual = `<img src="${url}" aria-hidden="true" onload="URL.revokeObjectURL(this.src)">`;
         }
-        div.innerHTML = `${visual}<div class="card-label">${isTelugu ? card.te : card.en}</div>`;
+        div.innerHTML = `${visual}<div class="card-label" aria-hidden="true">${isTelugu ? card.te : card.en}</div>`;
         container.appendChild(div);
     }
 
@@ -741,6 +754,10 @@
     function updateSentenceUI() {
         const bar = document.getElementById('sentence-bar');
         bar.innerHTML = '';
+        if (sentence.length === 0) {
+            bar.innerHTML = '<div class="empty-placeholder">Select cards to build a sentence...</div>';
+            return;
+        }
         // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
         const fragment = document.createDocumentFragment();
         sentence.forEach((card, i) => {
