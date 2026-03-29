@@ -666,17 +666,14 @@
     }
 
     function syncMemoryCache() {
-        allCards = [];
         const store = db.transaction("cards", "readonly").objectStore("cards");
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) { allCards.push(cursor.value); cursor.continue(); }
-            else {
-                const activeCatEl = document.querySelector('.filter-chip.active');
-                const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
-                loadCards(catText);
-                if (document.getElementById('admin-modal').style.display === 'block') loadAdminList();
-            }
+        // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
+        store.getAll().onsuccess = (e) => {
+            allCards = e.target.result || [];
+            const activeCatEl = document.querySelector('.filter-chip.active');
+            const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
+            loadCards(catText);
+            if (document.getElementById('admin-modal').style.display === 'block') loadAdminList();
         };
     }
 
