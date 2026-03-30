@@ -211,15 +211,17 @@
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Use getAll() for bulk retrieval and DocumentFragment for batch DOM insertions
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result;
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
                 if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, grid);
+                    renderCard(card, fragment);
                 }
-                cursor.continue();
             }
+            grid.appendChild(fragment);
         };
     }
 
@@ -353,10 +355,12 @@
         list.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Use getAll() for bulk retrieval and DocumentFragment for batch DOM insertions
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result;
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
                 const div = document.createElement('div');
                 div.className = 'manage-item';
                 div.innerHTML = `
@@ -368,9 +372,9 @@
                         <button class="btn-delete" onclick="deleteCard('${card.id}')">🗑️ Delete</button>
                     </div>
                 `;
-                list.appendChild(div);
-                cursor.continue();
+                fragment.appendChild(div);
             }
+            list.appendChild(fragment);
         };
     }
 

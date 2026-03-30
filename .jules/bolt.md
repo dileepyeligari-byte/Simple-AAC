@@ -1,0 +1,3 @@
+## 2024-03-30 - IndexedDB Cursor Loop Performance Anti-Pattern
+**Learning:** Using `openCursor()` to iterate through all objects and perform synchronous DOM insertions per iteration in IndexedDB introduces significant main-thread blocking and event loop overhead. It becomes a bottleneck when rendering large lists of cards since the callback runs N times.
+**Action:** Always prefer `getAll()` to retrieve data in a single shot and combine it with `DocumentFragment` to batch DOM insertions outside the loop whenever performing bulk data operations from IndexedDB.
