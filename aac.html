@@ -211,15 +211,16 @@
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Use getAll() and DocumentFragment to reduce event loop overhead and DOM reflows
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result || [];
+            const fragment = document.createDocumentFragment();
+            cards.forEach(card => {
                 if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, grid);
+                    renderCard(card, fragment);
                 }
-                cursor.continue();
-            }
+            });
+            grid.appendChild(fragment);
         };
     }
 
@@ -353,10 +354,11 @@
         list.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
-        store.openCursor().onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-                const card = cursor.value;
+        // ⚡ Bolt: Use getAll() and DocumentFragment to reduce event loop overhead and DOM reflows
+        store.getAll().onsuccess = (e) => {
+            const cards = e.target.result || [];
+            const fragment = document.createDocumentFragment();
+            cards.forEach(card => {
                 const div = document.createElement('div');
                 div.className = 'manage-item';
                 div.innerHTML = `
@@ -368,9 +370,9 @@
                         <button class="btn-delete" onclick="deleteCard('${card.id}')">🗑️ Delete</button>
                     </div>
                 `;
-                list.appendChild(div);
-                cursor.continue();
-            }
+                fragment.appendChild(div);
+            });
+            list.appendChild(fragment);
         };
     }
 
