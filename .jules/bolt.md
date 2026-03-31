@@ -1,0 +1,3 @@
+## 2024-05-24 - IndexedDB Bulk Data Retrieval Performance
+**Learning:** Using `store.openCursor()` for bulk data retrieval in IndexedDB fires a separate success event for every single record, which clogs the event loop and slows down rendering, especially as the database grows.
+**Action:** Use `store.getAll()` instead of `openCursor()` when retrieving all records. `getAll()` returns all records in a single asynchronous operation, significantly minimizing overhead and speeding up the application.
