@@ -371,11 +371,11 @@
         <h2 style="margin-top:0;">Welcome! 👋</h2>
         <p style="color:#666; margin-bottom:24px;">Let's personalize the AAC app for the child.</p>
         <div class="input-group">
-            <label>Child's Name (English)</label>
+            <label for="initNameEn">Child's Name (English)</label>
             <input type="text" id="initNameEn" placeholder="e.g. Rahul">
         </div>
         <div class="input-group">
-            <label>Child's Name (Telugu)</label>
+            <label for="initNameTe">Child's Name (Telugu)</label>
             <input type="text" id="initNameTe" placeholder="e.g. రాహుల్">
         </div>
         <button class="btn btn-play" style="width:100%; height:65px;" onclick="saveInitialUser()">Start Using AAC</button>
@@ -461,20 +461,20 @@
         <input type="hidden" id="editId">
         
         <div class="input-group">
-            <label>Upload Photo (Overrides Emoji):</label>
+            <label for="imgInput">Upload Photo (Overrides Emoji):</label>
             <input type="file" id="imgInput" accept="image/*">
         </div>
         <div class="input-group">
-            <input type="text" id="emojiInput" placeholder="Emoji (e.g. 🍎)" maxlength="2">
+            <input type="text" id="emojiInput" placeholder="Emoji (e.g. 🍎)" maxlength="2" aria-label="Emoji">
         </div>
         <div class="input-group">
-            <input type="text" id="teInput" placeholder="Telugu Text (e.g. ఆపిల్)">
+            <input type="text" id="teInput" placeholder="Telugu Text (e.g. ఆపిల్)" aria-label="Telugu Text">
         </div>
         <div class="input-group">
-            <input type="text" id="enInput" placeholder="English Text (e.g. Apple)">
+            <input type="text" id="enInput" placeholder="English Text (e.g. Apple)" aria-label="English Text">
         </div>
         <div class="input-group">
-            <select id="catInput">
+            <select id="catInput" aria-label="Category">
                 <option value="people">People</option><option value="needs">Needs</option>
                 <option value="emotions">Emotions</option><option value="actions">Actions</option>
                 <option value="items">Items</option><option value="social">Social</option>
@@ -497,7 +497,7 @@
     <hr>
     <h3>Parent Settings</h3>
     <div class="input-group" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <label style="margin-bottom:0;">Display Language:</label>
+        <label for="langSelect" style="margin-bottom:0;">Display Language:</label>
         <select id="langSelect" style="flex:1; min-width:140px;" onchange="setLanguage(this.value)">
             <option value="te">Telugu (తెలుగు)</option>
             <option value="en">English</option>
@@ -505,7 +505,7 @@
         <span style="font-weight:bold; color:#1976d2; font-size:0.9rem;">(Active: <span id="currentLangDisplay">Telugu</span>)</span>
     </div>
     <div class="input-group">
-        <label>Learning Level:</label>
+        <label for="levelSelect">Learning Level:</label>
         <select id="levelSelect" onchange="updateLevel()">
             <option value="1">Level 1: Foundation (Needs & Self)</option>
             <option value="2">Level 2: Building (Actions & Emotions)</option>
@@ -530,10 +530,10 @@
         </div>
 
         <div class="input-group">
-            <label>Card Management (Filter/Search):</label>
+            <label for="searchInput">Card Management (Filter/Search):</label>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="searchInput" style="flex:2;" placeholder="Search cards..." oninput="loadAdminList()">
-                <select id="levelFilter" style="flex:1;" onchange="loadAdminList()">
+                <select id="levelFilter" style="flex:1;" onchange="loadAdminList()" aria-label="Filter by level">
                     <option value="all">All Levels</option>
                     <option value="1">Level 1</option>
                     <option value="2">Level 2</option>
@@ -846,7 +846,7 @@
                 const div = document.createElement('div'); div.className = 'manage-item';
                 div.innerHTML = `<div style="flex:1;">${c.emoji || '🖼️'} ${c.en} / ${c.te}</div>
                     <div class="manage-actions">
-                        <select onchange="updateCardLevel('${c.id}', this.value)" title="Change Level">
+                        <select onchange="updateCardLevel('${c.id}', this.value)" title="Change Level" aria-label="Change Level">
                             <option value="1" ${c.level == 1 ? 'selected' : ''}>L1</option>
                             <option value="2" ${c.level == 2 ? 'selected' : ''}>L2</option>
                             <option value="3" ${c.level == 3 ? 'selected' : ''}>L3</option>
