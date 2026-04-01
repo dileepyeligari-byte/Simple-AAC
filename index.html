@@ -94,6 +94,7 @@
             font-family: inherit;
         }
         .btn:active { transform: scale(0.92); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
         
         .action-group { flex: 7; }
         .utility-group { flex: 3; display: flex; gap: 10px; }
@@ -363,7 +364,7 @@
 </head>
 <body>
 
-<div id="toast-container"></div>
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Custom Initialization Modal -->
 <div id="init-modal" class="modal-overlay">
@@ -401,7 +402,7 @@
         </div>
         <div class="action-container">
             <div class="action-group">
-                <button class="btn btn-play" onclick="playSentence()">
+                <button id="btn-speak" class="btn btn-play" onclick="playSentence()" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M2 21a8 8 0 0 1 10.82-6.53"></path>
                         <circle cx="9" cy="8" r="4.5"></circle>
@@ -412,12 +413,12 @@
                 </button>
             </div>
             <div class="utility-group">
-                <button class="btn btn-side btn-del" onclick="undoLast()" title="Erase Last" aria-label="Erase Last">
+                <button id="btn-undo" class="btn btn-side btn-del" onclick="undoLast()" title="Erase Last" aria-label="Erase Last" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
                 </button>
-                <button class="btn btn-side btn-clear" onclick="clearSentence()" title="Clear Everything" aria-label="Clear Everything">
+                <button id="btn-clear" class="btn btn-side btn-clear" onclick="clearSentence()" title="Clear Everything" aria-label="Clear Everything" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6m4-6v6"/>
                     </svg>
@@ -750,8 +751,14 @@
 
     function updateSentenceUI() {
         const bar = document.getElementById('sentence-bar');
+
+        const empty = sentence.length === 0;
+        document.getElementById('btn-speak').disabled = empty;
+        document.getElementById('btn-undo').disabled = empty;
+        document.getElementById('btn-clear').disabled = empty;
+
         bar.innerHTML = '';
-        if (sentence.length === 0) {
+        if (empty) {
             bar.innerHTML = '<div class="empty-placeholder">Select cards to build a sentence...</div>';
             return;
         }
