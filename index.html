@@ -681,11 +681,12 @@
     function cleanupJunk() {
         const tx = db.transaction("cards", "readwrite");
         const store = tx.objectStore("cards");
+        // ⚡ Bolt: Using cursor.delete() is more efficient for iterating and deleting records natively
         store.openCursor().onsuccess = (e) => {
             const cursor = e.target.result;
             if (cursor) {
                 if (cursor.value.cat === 'alphabet' || !cursor.value.en || cursor.value.en === '...') {
-                    store.delete(cursor.primaryKey);
+                    cursor.delete();
                 }
                 cursor.continue();
             }
