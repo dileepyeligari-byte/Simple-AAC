@@ -533,7 +533,7 @@
         <div class="input-group">
             <label for="searchInput">Card Management (Filter/Search):</label>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="searchInput" style="flex:2;" placeholder="Search cards..." oninput="loadAdminList()">
+                <input type="text" id="searchInput" style="flex:2;" placeholder="Search cards..." oninput="debouncedLoadAdminList()">
                 <select id="levelFilter" style="flex:1;" onchange="loadAdminList()" aria-label="Filter by Level">
                     <option value="all">All Levels</option>
                     <option value="1">Level 1</option>
@@ -836,6 +836,13 @@
         modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
         if (modal.style.display === 'block') loadAdminList();
         else resetForm();
+    }
+
+    // ⚡ Bolt: Added debouncing to prevent DOM reflow bottleneck on every keystroke
+    let searchTimeout;
+    function debouncedLoadAdminList() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(loadAdminList, 300);
     }
 
     function loadAdminList() {
