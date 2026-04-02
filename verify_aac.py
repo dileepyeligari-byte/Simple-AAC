@@ -37,7 +37,12 @@ def run_cuj(page):
 
     # Test Edit Card to see those labels
     # We find the edit button for the apple card
-    page.get_by_label("Edit Card").first.click()
+    # We only want the *visible* apple edit card since the others are hidden
+    # using display: none rather than being removed from DOM.
+    # get_by_label("Edit Card") gets all of them. So we pick the first one
+    # that is visible. Playwright's click() automatically waits for visibility,
+    # but since there are many, we must locate only the visible ones.
+    page.locator('.manage-item:visible').get_by_label("Edit Card").first.click()
     page.wait_for_timeout(1000)
 
     # Test the aria-labels on the edit form
