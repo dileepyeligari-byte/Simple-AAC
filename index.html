@@ -671,6 +671,7 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+            document.getElementById('cardGrid').dataset.rendered = "false";
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,21 +710,37 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
+
+        // ⚡ Bolt: Render nodes once and toggle visibility instead of destroying/recreating DOM nodes
+        if (grid.dataset.rendered === "true") {
+            Array.from(grid.children).forEach(child => {
+                const match = (filterCat === 'all' || child.dataset.cat === filterCat) && parseInt(child.dataset.level) <= userLevel;
+                child.style.display = match ? '' : 'none';
+            });
+            return;
+        }
+
+        grid.innerHTML = '';
         const fragment = document.createDocumentFragment();
         allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
-                renderCard(card, fragment);
-            }
+            renderCard(card, fragment);
         });
         grid.appendChild(fragment);
+        grid.dataset.rendered = "true";
+
+        // Apply filter immediately after initial render
+        Array.from(grid.children).forEach(child => {
+            const match = (filterCat === 'all' || child.dataset.cat === filterCat) && parseInt(child.dataset.level) <= userLevel;
+            child.style.display = match ? '' : 'none';
+        });
     }
 
     function renderCard(card, container) {
         const div = document.createElement('div');
         div.className = `card cat-${card.cat}`;
+        div.dataset.cat = card.cat;
+        div.dataset.level = card.level || 1;
         div.setAttribute('role', 'button');
         div.tabIndex = 0;
         div.onclick = () => handleCardClick(card);
