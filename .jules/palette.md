@@ -4,3 +4,7 @@
 ## 2024-05-24 - Action buttons and toast accessibility
 **Learning:** Action buttons should visually convey when they are unavailable (disabled state) to prevent confusion. Toast containers must use aria-live regions so screen readers can announce dynamic updates without requiring focus.
 **Action:** Add disabled attributes to buttons that require state (e.g., non-empty input/selections), along with visual styles (opacity, cursor). Always add aria-live="polite" to global toast or notification containers.
+
+## 2024-05-24 - Hold-to-Unlock UI Keyboard Support
+**Learning:** Custom "hold-to-unlock" security patterns implemented via mousedown/touchstart gates completely exclude keyboard users unless explicitly handled.
+**Action:** When implementing custom hold timers, explicitly add `keydown` (checking `!event.repeat` to prevent rapid firing) and `keyup` handlers mapped to 'Enter' and 'Space' to ensure feature parity for keyboard/switch users.
