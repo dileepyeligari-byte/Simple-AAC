@@ -6,3 +6,7 @@
 ## 2024-03-29 - Search Input Debouncing
 **Learning:** Filtering cached arrays and batching DOM insertions is good, but doing it synchronously on every keystroke without debouncing is a bottleneck that causes UI jank.
 **Action:** Debounce high-frequency inputs (like search bars) that trigger DOM rebuilds, even when data retrieval is O(1).
+
+## 2024-04-03 - DOM Rebuilding vs Visibility Toggling
+**Learning:** Destroying and recreating entire lists of DOM nodes (using `innerHTML = ''` and regenerating the fragment) for filtering is an expensive operation that forces complete layout recalculations.
+**Action:** For frequently filtered grid/list components, generate the DOM nodes once and cache them. Update their visibility using `style.display = 'none'` or `''` based on dataset attribute checks. Only invalidate the cache (and rebuild nodes) when underlying data changes.
