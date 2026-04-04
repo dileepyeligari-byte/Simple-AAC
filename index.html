@@ -224,8 +224,8 @@
             transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             min-height: 88px; /* -20% from 110 */
         }
+        *:focus-visible { outline: 3px solid var(--primary) !important; outline-offset: 2px !important; }
         .card:active { transform: scale(0.96) rotate(-0.5deg); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
         .card img { width: 85%; height: auto; aspect-ratio: 1/1; object-fit: contain; border-radius: 12px; margin-bottom: 6px; }
         .card-emoji { font-size: 2.2rem; margin-bottom: 4px; }
         .card-label { 
@@ -444,7 +444,7 @@
 
 <div class="grid" id="cardGrid"></div>
 
-<button class="fab" id="adminBtn" onmousedown="startGate()" onmouseup="stopGate()" ontouchstart="startGate()" ontouchend="stopGate()" aria-label="Parent Settings">
+<button class="fab" id="adminBtn" onmousedown="startGate()" onmouseup="stopGate()" ontouchstart="startGate()" ontouchend="stopGate()" onkeydown="if(!event.repeat && (event.key === 'Enter' || event.key === ' ')) startGate()" onkeyup="if(event.key === 'Enter' || event.key === ' ') stopGate()" aria-label="Parent Settings">
     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"></circle>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
