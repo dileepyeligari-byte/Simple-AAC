@@ -16,39 +16,35 @@ def run_cuj(page):
     except Exception as e:
         print("Init modal not found or already filled", e)
 
-    # 2. Open Admin Modal
+    # 2. Test Category Filters (loadCards)
+    page.get_by_role("button", name="Needs").click()
+    page.wait_for_timeout(1000)
+    page.get_by_role("button", name="Emotions").click()
+    page.wait_for_timeout(1000)
+    page.get_by_role("button", name="All").click()
+    page.wait_for_timeout(1000)
+
+    # 3. Open Admin Modal
     # The fab button has a mousedown/touchstart gate of 2 seconds
     fab = page.get_by_label("Parent Settings")
     fab.evaluate("el => { const event = new MouseEvent('mousedown'); el.dispatchEvent(event); }")
     page.wait_for_timeout(2500) # Wait for gate timer
 
-    # 3. Interact with newly labeled inputs in Admin Modal
-    # Test Language Select
-    page.get_by_label("Display Language:").select_option("en")
-    page.wait_for_timeout(500)
-
-    # Test Level Select
+    # 4. Test Search/Filter (loadAdminList)
     page.get_by_label("Learning Level:").select_option("5")
     page.wait_for_timeout(500)
 
-    # Test Card Management Search
     page.get_by_label("Card Management (Filter/Search):").fill("apple")
-    page.wait_for_timeout(500)
-
-    # Test Edit Card to see those labels
-    # We find the edit button for the apple card
-    page.locator("[aria-label='Edit Card']:visible").first.click()
     page.wait_for_timeout(1000)
 
-    # Test the aria-labels on the edit form
-    page.get_by_label("English Text").fill("Apple Updated")
-    page.wait_for_timeout(500)
-
-    page.get_by_role("button", name="💾 Save Card").click()
+    page.get_by_label("Card Management (Filter/Search):").fill("")
     page.wait_for_timeout(1000)
 
-    # Take screenshot at the key moment (Admin modal open)
-    page.screenshot(path="verification.png")
+    page.get_by_label("Card Management (Filter/Search):").fill("water")
+    page.wait_for_timeout(1000)
+
+    # Take screenshot
+    page.screenshot(path="verification_perf.png")
     page.wait_for_timeout(1000)  # Hold final state for the video
 
 if __name__ == "__main__":
