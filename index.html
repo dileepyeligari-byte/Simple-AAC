@@ -671,6 +671,7 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+            document.getElementById('cardGrid').dataset.cached = ""; // Invalidate DOM cache
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,16 +710,25 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
-                renderCard(card, fragment);
+
+        // ⚡ Bolt: Cache DOM nodes to avoid expensive innerHTML recreations on filter changes
+        if (!grid.dataset.cached) {
+            grid.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            // Render all nodes unconditionally during initial construction
+            allCards.forEach(card => renderCard(card, fragment));
+            grid.appendChild(fragment);
+            grid.dataset.cached = "true";
+        }
+
+        const nodes = grid.children;
+        allCards.forEach((card, i) => {
+            if (nodes[i]) {
+                const isVisible = (filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel;
+                nodes[i].style.display = isVisible ? '' : 'none';
             }
         });
-        grid.appendChild(fragment);
     }
 
     function renderCard(card, container) {
