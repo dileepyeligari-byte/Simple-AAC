@@ -193,7 +193,7 @@
             if (countReq.result === 0) {
                 getStarterDeck().forEach(c => store.add(c));
             }
-            loadCards('all');
+            loadCards('all', true); // Initial load
         };
     }
 
@@ -203,11 +203,26 @@
         isTelugu = !isTelugu;
         document.getElementById('langBtn').innerText = isTelugu ? "తెలుగు Mode" : "English Mode";
         speakText(isTelugu ? "తెలుగు" : "English");
-        loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+        // ⚡ Bolt: Force rebuild DOM on language change to reflect new labels
+        loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase(), true);
     }
 
-    function loadCards(filterCat) {
+    function loadCards(filterCat, forceRebuild = false) {
         const grid = document.getElementById('cardGrid');
+
+        // ⚡ Bolt: Cache DOM nodes and toggle visibility instead of rebuilding the DOM
+        if (!forceRebuild && grid.children.length > 0) {
+            Array.from(grid.children).forEach(cardNode => {
+                const cardCat = cardNode.getAttribute('data-cat');
+                if (filterCat === 'all' || cardCat === filterCat) {
+                    cardNode.style.display = '';
+                } else {
+                    cardNode.style.display = 'none';
+                }
+            });
+            return;
+        }
+
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
@@ -215,18 +230,26 @@
         store.getAll().onsuccess = (e) => {
             const cards = e.target.result || [];
             const fragment = document.createDocumentFragment();
+            // ⚡ Bolt: Render all nodes unconditionally during initial construction to maintain index matching
             cards.forEach(card => {
-                if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, fragment);
-                }
+                renderCard(card, fragment);
             });
             grid.appendChild(fragment);
+
+            // Apply initial filter
+            Array.from(grid.children).forEach(cardNode => {
+                const cardCat = cardNode.getAttribute('data-cat');
+                if (filterCat !== 'all' && cardCat !== filterCat) {
+                    cardNode.style.display = 'none';
+                }
+            });
         };
     }
 
     function renderCard(card, container) {
         const div = document.createElement('div');
         div.className = `card cat-${card.cat}`;
+        div.setAttribute('data-cat', card.cat);
         div.setAttribute('role', 'button');
         div.tabIndex = 0;
         div.onclick = () => handleCardClick(card);
@@ -252,7 +275,8 @@
     function filterCards(cat) {
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
         event.target.classList.add('active');
-        loadCards(cat);
+        // ⚡ Bolt: Use cached DOM for filtering
+        loadCards(cat, false);
     }
 
     // --- Playback Logic ---
@@ -420,7 +444,8 @@
             tx.objectStore("cards").delete(id);
             tx.oncomplete = () => {
                 loadAdminList();
-                loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+                // ⚡ Bolt: Force rebuild DOM after deletion to remove stale node
+                loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase(), true);
             };
         }
     }
@@ -503,7 +528,8 @@
             alert(editId ? "Card Updated!" : "New Card Saved!");
             resetForm();
             loadAdminList();
-            loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
+            // ⚡ Bolt: Force rebuild DOM after edit/add to reflect changes
+            loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase(), true);
         };
     }
 </script>
