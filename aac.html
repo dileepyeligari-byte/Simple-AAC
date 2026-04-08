@@ -142,6 +142,8 @@
     let isPlaying = false;
     let userNameEn = "Child";
     let userNameTe = "పిల్లవాడు";
+    let cachedCardNodes = [];
+    let isGridBuilt = false;
 
     // --- Username Request Logic ---
     function initializeUser() {
@@ -193,6 +195,7 @@
             if (countReq.result === 0) {
                 getStarterDeck().forEach(c => store.add(c));
             }
+            isGridBuilt = false;
             loadCards('all');
         };
     }
@@ -203,11 +206,21 @@
         isTelugu = !isTelugu;
         document.getElementById('langBtn').innerText = isTelugu ? "తెలుగు Mode" : "English Mode";
         speakText(isTelugu ? "తెలుగు" : "English");
+        isGridBuilt = false;
         loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
     }
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
+
+        if (isGridBuilt) {
+            // ⚡ Bolt: DOM Caching to avoid innerHTML resets and reflows on filter changes
+            cachedCardNodes.forEach(item => {
+                item.node.style.display = (filterCat === 'all' || item.cat === filterCat) ? '' : 'none';
+            });
+            return;
+        }
+
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
@@ -215,12 +228,15 @@
         store.getAll().onsuccess = (e) => {
             const cards = e.target.result || [];
             const fragment = document.createDocumentFragment();
+            cachedCardNodes = [];
+
             cards.forEach(card => {
-                if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, fragment);
-                }
+                const node = renderCard(card, fragment);
+                cachedCardNodes.push({ node: node, cat: card.cat });
+                node.style.display = (filterCat === 'all' || card.cat === filterCat) ? '' : 'none';
             });
             grid.appendChild(fragment);
+            isGridBuilt = true;
         };
     }
 
@@ -247,6 +263,7 @@
             <div class="card-label" aria-hidden="true">${label}</div>
         `;
         container.appendChild(div);
+        return div;
     }
 
     function filterCards(cat) {
@@ -420,6 +437,7 @@
             tx.objectStore("cards").delete(id);
             tx.oncomplete = () => {
                 loadAdminList();
+                isGridBuilt = false;
                 loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
             };
         }
@@ -503,6 +521,7 @@
             alert(editId ? "Card Updated!" : "New Card Saved!");
             resetForm();
             loadAdminList();
+            isGridBuilt = false;
             loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
         };
     }
