@@ -567,6 +567,7 @@
     let userNameTe = "పిల్లవాడు";
     let gateTimer;
     let allCards = [];
+    let isGridDirty = true; // ⚡ Bolt: Flag to track when DOM nodes need full rebuild
 
     // --- UI Helpers ---
     function showToast(msg) {
@@ -671,6 +672,7 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+            isGridDirty = true; // ⚡ Bolt: Invalidate cache when underlying data changes
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,16 +711,26 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
-                renderCard(card, fragment);
+
+        // ⚡ Bolt: Render DOM nodes once and toggle visibility instead of destroying/recreating elements
+        if (isGridDirty) {
+            grid.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            // Unconditionally render all nodes during initial construction to maintain index parity
+            allCards.forEach(card => renderCard(card, fragment));
+            grid.appendChild(fragment);
+            isGridDirty = false;
+        }
+
+        // Toggle visibility based on filter criteria
+        const children = grid.children;
+        allCards.forEach((card, index) => {
+            if (children[index]) {
+                const match = (filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel;
+                children[index].style.display = match ? '' : 'none';
             }
         });
-        grid.appendChild(fragment);
     }
 
     function renderCard(card, container) {
