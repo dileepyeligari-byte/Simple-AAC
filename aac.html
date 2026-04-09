@@ -35,9 +35,9 @@
         .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding-bottom: 80px; }
         @media (max-width: 600px) { .grid { grid-template-columns: repeat(4, 1fr); } }
         
+        *:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
         .card { background: white; border-radius: 10px; padding: 6px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; border: 3px solid transparent; display: flex; flex-direction: column; justify-content: center; transition: transform 0.1s; }
         .card:active { transform: scale(0.92); }
-        .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
         .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; }
         .card-emoji { font-size: 2rem; margin-bottom: 2px; }
         .card-label { font-weight: 800; font-size: 0.65rem; line-height: 1.1; word-break: break-word; }
@@ -85,7 +85,7 @@
 
 <button class="fab" onclick="toggleAdmin()" aria-label="Parent Settings">⚙️</button>
 
-<div id="admin-modal">
+<div id="admin-modal" role="dialog" aria-modal="true">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 id="admin-title">Add/Edit Card</h2>
         <button class="btn btn-clear" style="flex:none; padding:10px 20px;" onclick="toggleAdmin()">Close</button>
