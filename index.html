@@ -567,6 +567,8 @@
     let userNameTe = "పిల్లవాడు";
     let gateTimer;
     let allCards = [];
+    let domCacheValid = false;
+    let adminDomCacheValid = false;
 
     // --- UI Helpers ---
     function showToast(msg) {
@@ -671,6 +673,11 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+
+            // ⚡ Bolt: Invalidate DOM caches whenever data changes (e.g. edits, language switches)
+            domCacheValid = false;
+            adminDomCacheValid = false;
+
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,16 +716,30 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
-                renderCard(card, fragment);
+
+        if (!domCacheValid) {
+            grid.innerHTML = '';
+            // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
+            const fragment = document.createDocumentFragment();
+            allCards.forEach(card => renderCard(card, fragment));
+            grid.appendChild(fragment);
+            domCacheValid = true;
+        }
+
+        // ⚡ Bolt: Toggle visibility instead of destroying/recreating DOM nodes for faster filtering
+        const children = grid.children;
+        for (let i = 0; i < allCards.length; i++) {
+            const card = allCards[i];
+            const el = children[i];
+            if (el) {
+                if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
             }
-        });
-        grid.appendChild(fragment);
+        }
     }
 
     function renderCard(card, container) {
@@ -847,14 +868,14 @@
 
     function loadAdminList() {
         const list = document.getElementById('admin-card-list');
-        list.innerHTML = '';
         const query = document.getElementById('searchInput').value.toLowerCase();
         const fLvl = document.getElementById('levelFilter').value;
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(c => {
-            const match = (!query || c.en.toLowerCase().includes(query) || c.te.toLowerCase().includes(query)) && (fLvl === 'all' || c.level === parseInt(fLvl));
-            if (match) {
+
+        if (!adminDomCacheValid) {
+            list.innerHTML = '';
+            // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
+            const fragment = document.createDocumentFragment();
+            allCards.forEach(c => {
                 const div = document.createElement('div'); div.className = 'manage-item';
                 div.innerHTML = `<div style="flex:1;">${c.emoji || '🖼️'} ${c.en} / ${c.te}</div>
                     <div class="manage-actions">
@@ -869,9 +890,25 @@
                         <button class="btn-delete" onclick="deleteCard('${c.id}')" aria-label="Delete Card">🗑️</button>
                     </div>`;
                 fragment.appendChild(div);
+            });
+            list.appendChild(fragment);
+            adminDomCacheValid = true;
+        }
+
+        // ⚡ Bolt: Toggle visibility instead of destroying/recreating DOM nodes for faster filtering
+        const children = list.children;
+        for (let i = 0; i < allCards.length; i++) {
+            const c = allCards[i];
+            const el = children[i];
+            if (el) {
+                const match = (!query || c.en.toLowerCase().includes(query) || c.te.toLowerCase().includes(query)) && (fLvl === 'all' || c.level === parseInt(fLvl));
+                if (match) {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
             }
-        });
-        list.appendChild(fragment);
+        }
     }
 
     function updateCardLevel(id, newLevel) {
