@@ -1,6 +1,3 @@
-## 2024-05-24 - Interactive Elements Need Keyboard Support
-**Learning:** Custom interactive elements (like the AAC cards rendered as `div`s) must explicitly implement keyboard support (`role="button"`, `tabindex="0"`, and `keydown` event listeners for Enter/Space keys) to be accessible for users who rely on switch controls or keyboard navigation.
-**Action:** Always add keyboard accessibility attributes and event listeners when using non-semantic HTML elements for interactivity.
-## 2024-05-24 - Action buttons and toast accessibility
-**Learning:** Action buttons should visually convey when they are unavailable (disabled state) to prevent confusion. Toast containers must use aria-live regions so screen readers can announce dynamic updates without requiring focus.
-**Action:** Add disabled attributes to buttons that require state (e.g., non-empty input/selections), along with visual styles (opacity, cursor). Always add aria-live="polite" to global toast or notification containers.
+## 2026-04-11 - Hold-to-Unlock Keyboard Accessibility
+**Learning:** Custom "long press" or "hold to unlock" UI patterns implemented via `mousedown`/`mouseup` and `touchstart`/`touchend` natively exclude keyboard users. Implementing a keyboard equivalent requires mapping `keydown` to the start action and `keyup` to the stop action. Crucially, the `keydown` event fires repeatedly when a key is held down.
+**Action:** When adding keyboard support to hold-based custom interactions, always check `!event.repeat` in the `keydown` handler to prevent re-triggering the start logic, and use `keyup` to handle the release. Example: `onkeydown="if(!event.repeat && (event.key === 'Enter' || event.key === ' ')) startGate()"`
