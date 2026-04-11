@@ -567,6 +567,8 @@
     let userNameTe = "పిల్లవాడు";
     let gateTimer;
     let allCards = [];
+    let cardsNeedsRebuild = true;
+    let adminNeedsRebuild = true;
 
     // --- UI Helpers ---
     function showToast(msg) {
@@ -671,6 +673,8 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+            cardsNeedsRebuild = true;
+            adminNeedsRebuild = true;
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,16 +713,25 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
+
+        if (cardsNeedsRebuild) {
+            grid.innerHTML = '';
+            // ⚡ Bolt: Render all nodes once, then toggle visibility to prevent DOM recreation
+            const fragment = document.createDocumentFragment();
+            allCards.forEach(card => {
                 renderCard(card, fragment);
+            });
+            grid.appendChild(fragment);
+            cardsNeedsRebuild = false;
+        }
+
+        allCards.forEach((card, i) => {
+            const match = (filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel;
+            if (grid.children[i]) {
+                grid.children[i].style.display = match ? '' : 'none';
             }
         });
-        grid.appendChild(fragment);
     }
 
     function renderCard(card, container) {
@@ -847,14 +860,14 @@
 
     function loadAdminList() {
         const list = document.getElementById('admin-card-list');
-        list.innerHTML = '';
         const query = document.getElementById('searchInput').value.toLowerCase();
         const fLvl = document.getElementById('levelFilter').value;
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(c => {
-            const match = (!query || c.en.toLowerCase().includes(query) || c.te.toLowerCase().includes(query)) && (fLvl === 'all' || c.level === parseInt(fLvl));
-            if (match) {
+
+        if (adminNeedsRebuild) {
+            list.innerHTML = '';
+            // ⚡ Bolt: Render all nodes once, then toggle visibility to prevent DOM recreation
+            const fragment = document.createDocumentFragment();
+            allCards.forEach(c => {
                 const div = document.createElement('div'); div.className = 'manage-item';
                 div.innerHTML = `<div style="flex:1;">${c.emoji || '🖼️'} ${c.en} / ${c.te}</div>
                     <div class="manage-actions">
@@ -869,9 +882,17 @@
                         <button class="btn-delete" onclick="deleteCard('${c.id}')" aria-label="Delete Card">🗑️</button>
                     </div>`;
                 fragment.appendChild(div);
+            });
+            list.appendChild(fragment);
+            adminNeedsRebuild = false;
+        }
+
+        allCards.forEach((c, i) => {
+            const match = (!query || c.en.toLowerCase().includes(query) || c.te.toLowerCase().includes(query)) && (fLvl === 'all' || c.level === parseInt(fLvl));
+            if (list.children[i]) {
+                list.children[i].style.display = match ? 'flex' : 'none';
             }
         });
-        list.appendChild(fragment);
     }
 
     function updateCardLevel(id, newLevel) {
