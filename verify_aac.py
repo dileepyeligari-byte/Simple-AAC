@@ -36,8 +36,8 @@ def run_cuj(page):
     page.wait_for_timeout(500)
 
     # Test Edit Card to see those labels
-    # We find the edit button for the apple card
-    page.get_by_label("Edit Card").first.click()
+    # We find the edit button for the apple card by visible elements only, since display: none is used
+    page.locator('button[aria-label="Edit Card"]:visible').first.click()
     page.wait_for_timeout(1000)
 
     # Test the aria-labels on the edit form
