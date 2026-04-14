@@ -4,3 +4,6 @@
 ## 2024-05-24 - Action buttons and toast accessibility
 **Learning:** Action buttons should visually convey when they are unavailable (disabled state) to prevent confusion. Toast containers must use aria-live regions so screen readers can announce dynamic updates without requiring focus.
 **Action:** Add disabled attributes to buttons that require state (e.g., non-empty input/selections), along with visual styles (opacity, cursor). Always add aria-live="polite" to global toast or notification containers.
+## 2024-05-24 - Modals and focus accessibility
+**Learning:** Modals must use `role="dialog"` and `aria-modal="true"` with proper labelling attributes (`aria-labelledby` and `aria-describedby`) to inform screen readers of their presence and restrict background interaction. Furthermore, a global focus indicator (e.g. `*:focus-visible`) is essential to ensure consistent keyboard navigation focus across all interactive elements, rather than targeting specific classes which can leave gaps.
+**Action:** Always add dialog roles and label references to modal overlays. Apply global focus-visible styles to standardise focus rings across the entire application interface.
