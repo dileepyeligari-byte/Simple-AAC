@@ -6,3 +6,7 @@
 ## 2024-03-29 - Search Input Debouncing
 **Learning:** Filtering cached arrays and batching DOM insertions is good, but doing it synchronously on every keystroke without debouncing is a bottleneck that causes UI jank.
 **Action:** Debounce high-frequency inputs (like search bars) that trigger DOM rebuilds, even when data retrieval is O(1).
+
+## 2024-03-30 - DOM Visibility Toggling
+**Learning:** Tearing down and recreating DOM nodes for frequently updated lists (`innerHTML = ''`) causes unnecessary layout trashing and blocks the main thread.
+**Action:** Render nodes once and toggle visibility (`style.display = 'none'`) instead of destroying and recreating DOM nodes. Explicitly invalidate and rebuild the cached DOM nodes whenever underlying data updates (e.g., using a boolean rebuild flag that is set to true on data changes like edits or language switches) rather than relying only on array length changes to avoid stale data. When applying the DOM visibility toggling pattern, render all nodes unconditionally during the initial DOM construction. Do not conditionally skip elements during the initial render, as this causes index mismatches between the underlying data array and DOM children when iterating to toggle visibility later.
