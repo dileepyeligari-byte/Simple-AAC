@@ -17,7 +17,6 @@ def run_test(page):
         print("Init modal not found or already filled", e)
 
     # 2. Open Admin Modal
-    # The fab button has a mousedown/touchstart gate of 2 seconds
     fab = page.get_by_label("Parent Settings")
     fab.evaluate("el => { const event = new MouseEvent('mousedown'); el.dispatchEvent(event); }")
     page.wait_for_timeout(2500) # Wait for gate timer
@@ -32,8 +31,8 @@ def run_test(page):
     # Wait for debounce to finish (300ms + some buffer)
     page.wait_for_timeout(500)
 
-    # Verify the results are filtered
-    cards = page.locator(".manage-item").all()
+    # Verify the results are filtered. We use :visible because they are hidden using display: none.
+    cards = page.locator(".manage-item:visible").all()
     print(f"Number of cards displayed after search: {len(cards)}")
 
     # Take screenshot at the key moment (Admin modal open)
