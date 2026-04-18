@@ -567,6 +567,7 @@
     let userNameTe = "పిల్లవాడు";
     let gateTimer;
     let allCards = [];
+    let gridNeedsRebuild = true;
 
     // --- UI Helpers ---
     function showToast(msg) {
@@ -671,6 +672,7 @@
         // ⚡ Bolt: Using getAll() instead of openCursor() reduces IndexedDB callback overhead (O(1) callbacks instead of O(N))
         store.getAll().onsuccess = (e) => {
             allCards = e.target.result || [];
+            gridNeedsRebuild = true;
             const activeCatEl = document.querySelector('.filter-chip.active');
             const catText = activeCatEl ? activeCatEl.innerText.toLowerCase() : 'all';
             loadCards(catText);
@@ -709,16 +711,29 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
-        grid.innerHTML = '';
         const userLevel = parseInt(localStorage.getItem('aac_level') || '5');
-        // ⚡ Bolt: Batch DOM insertions to reduce reflows (O(1) instead of O(n) updates)
-        const fragment = document.createDocumentFragment();
-        allCards.forEach(card => {
-            if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
+
+        // ⚡ Bolt: Render DOM nodes once and toggle visibility to reduce repaint/reflow overhead during filtering
+        if (gridNeedsRebuild) {
+            grid.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            allCards.forEach(card => {
                 renderCard(card, fragment);
+            });
+            grid.appendChild(fragment);
+            gridNeedsRebuild = false;
+        }
+
+        allCards.forEach((card, index) => {
+            const child = grid.children[index];
+            if (child) {
+                if ((filterCat === 'all' || card.cat === filterCat) && (card.level || 1) <= userLevel) {
+                    child.style.display = '';
+                } else {
+                    child.style.display = 'none';
+                }
             }
         });
-        grid.appendChild(fragment);
     }
 
     function renderCard(card, container) {
@@ -1000,8 +1015,8 @@
         const activeBtn = document.getElementById(`grid${n}`);
         if(activeBtn) activeBtn.classList.add('active');
     }
-    function updateLevel() { localStorage.setItem('aac_level', document.getElementById('levelSelect').value); syncMemoryCache(); showToast("Level Updated! 🎯"); }
-    function setLanguage(l) { isTelugu = (l === 'te'); syncMemoryCache(); document.getElementById('currentLangDisplay').innerText = (l === 'te' ? "తెలుగు" : "English"); }
+    function updateLevel() { localStorage.setItem('aac_level', document.getElementById('levelSelect').value); gridNeedsRebuild = true; syncMemoryCache(); showToast("Level Updated! 🎯"); }
+    function setLanguage(l) { isTelugu = (l === 'te'); gridNeedsRebuild = true; syncMemoryCache(); document.getElementById('currentLangDisplay').innerText = (l === 'te' ? "తెలుగు" : "English"); }
 
     function getStarterDeck() {
         return [
