@@ -142,6 +142,7 @@
     let isPlaying = false;
     let userNameEn = "Child";
     let userNameTe = "పిల్లవాడు";
+    let needsRebuild = true;
 
     // --- Username Request Logic ---
     function initializeUser() {
@@ -201,6 +202,7 @@
     function toggleLanguage() {
         window.speechSynthesis.cancel();
         isTelugu = !isTelugu;
+        needsRebuild = true;
         document.getElementById('langBtn').innerText = isTelugu ? "తెలుగు Mode" : "English Mode";
         speakText(isTelugu ? "తెలుగు" : "English");
         loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
@@ -208,6 +210,19 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
+
+        if (!needsRebuild) {
+            // ⚡ Bolt: Toggle visibility of existing DOM nodes instead of destroying and recreating
+            Array.from(grid.children).forEach(child => {
+                if (filterCat === 'all' || child.classList.contains('cat-' + filterCat)) {
+                    child.style.display = 'flex';
+                } else {
+                    child.style.display = 'none';
+                }
+            });
+            return;
+        }
+
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
@@ -216,11 +231,19 @@
             const cards = e.target.result || [];
             const fragment = document.createDocumentFragment();
             cards.forEach(card => {
-                if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, fragment);
-                }
+                renderCard(card, fragment);
             });
             grid.appendChild(fragment);
+            needsRebuild = false;
+
+            // Apply filter via visibility toggling
+            Array.from(grid.children).forEach(child => {
+                if (filterCat === 'all' || child.classList.contains('cat-' + filterCat)) {
+                    child.style.display = 'flex';
+                } else {
+                    child.style.display = 'none';
+                }
+            });
         };
     }
 
@@ -419,6 +442,7 @@
             const tx = db.transaction("cards", "readwrite");
             tx.objectStore("cards").delete(id);
             tx.oncomplete = () => {
+                needsRebuild = true;
                 loadAdminList();
                 loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
             };
@@ -500,6 +524,7 @@
         }
 
         tx.oncomplete = () => {
+            needsRebuild = true;
             alert(editId ? "Card Updated!" : "New Card Saved!");
             resetForm();
             loadAdminList();
