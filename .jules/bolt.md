@@ -6,3 +6,7 @@
 ## 2024-03-29 - Search Input Debouncing
 **Learning:** Filtering cached arrays and batching DOM insertions is good, but doing it synchronously on every keystroke without debouncing is a bottleneck that causes UI jank.
 **Action:** Debounce high-frequency inputs (like search bars) that trigger DOM rebuilds, even when data retrieval is O(1).
+
+## 2026-04-19 - DOM Visibility Toggling
+**Learning:** When using DOM visibility toggling (`style.display = 'none'`) to filter lists instead of recreating elements, rendering them conditionally initially causes index mismatch bugs during subsequent updates because `grid.children[i]` no longer perfectly maps to `data[i]`.
+**Action:** When applying visibility toggling patterns, render *all* nodes unconditionally during initial DOM construction to establish a 1:1 index map with the data array, *then* iterate and toggle display styles to filter them.
