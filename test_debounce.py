@@ -33,7 +33,7 @@ def run_test(page):
     page.wait_for_timeout(500)
 
     # Verify the results are filtered
-    cards = page.locator(".manage-item").all()
+    cards = page.locator(".manage-item:visible").all()
     print(f"Number of cards displayed after search: {len(cards)}")
 
     # Take screenshot at the key moment (Admin modal open)
