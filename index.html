@@ -225,7 +225,7 @@
             min-height: 88px; /* -20% from 110 */
         }
         .card:active { transform: scale(0.96) rotate(-0.5deg); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+        *:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
         .card img { width: 85%; height: auto; aspect-ratio: 1/1; object-fit: contain; border-radius: 12px; margin-bottom: 6px; }
         .card-emoji { font-size: 2.2rem; margin-bottom: 4px; }
         .card-label { 
@@ -367,9 +367,9 @@
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Custom Initialization Modal -->
-<div id="init-modal" class="modal-overlay">
+<div id="init-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="init-title">
     <div class="modal-card">
-        <h2 style="margin-top:0;">Welcome! 👋</h2>
+        <h2 id="init-title" style="margin-top:0;">Welcome! 👋</h2>
         <p style="color:#666; margin-bottom:24px;">Let's personalize the AAC app for the child.</p>
         <div class="input-group">
             <label for="initNameEn">Child's Name (English)</label>
@@ -384,7 +384,7 @@
 </div>
 
 <!-- Confirmation Modal -->
-<div id="confirm-modal" class="modal-overlay">
+<div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
     <div class="modal-card" style="text-align:center;">
         <h3 id="confirm-title">Are you sure?</h3>
         <p id="confirm-body" style="color:#666; font-size:0.95rem; line-height:1.4;"></p>
@@ -451,7 +451,7 @@
     </svg>
 </button>
 
-<div id="admin-modal">
+<div id="admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-title">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h2 id="admin-title">Add/Edit Card</h2>
         <button class="btn" style="background:#cfd8dc; padding:10px 20px;" onclick="toggleAdmin()">Close</button>
