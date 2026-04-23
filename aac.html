@@ -142,6 +142,8 @@
     let isPlaying = false;
     let userNameEn = "Child";
     let userNameTe = "పిల్లవాడు";
+    let needsRebuild = true;
+    let allCardsData = [];
 
     // --- Username Request Logic ---
     function initializeUser() {
@@ -201,6 +203,7 @@
     function toggleLanguage() {
         window.speechSynthesis.cancel();
         isTelugu = !isTelugu;
+        needsRebuild = true;
         document.getElementById('langBtn').innerText = isTelugu ? "తెలుగు Mode" : "English Mode";
         speakText(isTelugu ? "తెలుగు" : "English");
         loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
@@ -208,20 +211,43 @@
 
     function loadCards(filterCat) {
         const grid = document.getElementById('cardGrid');
+
+        if (!needsRebuild) {
+            applyFilter(filterCat);
+            return;
+        }
+
         grid.innerHTML = '';
         const store = db.transaction("cards", "readonly").objectStore("cards");
         
         // ⚡ Bolt: Using getAll() and batching UI rendering to reduce callback overhead and DOM reflows
         store.getAll().onsuccess = (e) => {
-            const cards = e.target.result || [];
+            allCardsData = e.target.result || [];
             const fragment = document.createDocumentFragment();
-            cards.forEach(card => {
-                if (filterCat === 'all' || card.cat === filterCat) {
-                    renderCard(card, fragment);
-                }
+            // Render all cards unconditionally to maintain index alignment
+            allCardsData.forEach(card => {
+                renderCard(card, fragment);
             });
             grid.appendChild(fragment);
+            needsRebuild = false;
+            applyFilter(filterCat);
         };
+    }
+
+    function applyFilter(filterCat) {
+        const grid = document.getElementById('cardGrid');
+        for (let i = 0; i < allCardsData.length; i++) {
+            const card = allCardsData[i];
+            const child = grid.children[i];
+            if (child) {
+                // ⚡ Bolt: Toggle DOM visibility instead of rebuilding DOM
+                if (filterCat === 'all' || card.cat === filterCat) {
+                    child.style.display = '';
+                } else {
+                    child.style.display = 'none';
+                }
+            }
+        }
     }
 
     function renderCard(card, container) {
@@ -419,6 +445,7 @@
             const tx = db.transaction("cards", "readwrite");
             tx.objectStore("cards").delete(id);
             tx.oncomplete = () => {
+                needsRebuild = true;
                 loadAdminList();
                 loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
             };
@@ -501,6 +528,7 @@
 
         tx.oncomplete = () => {
             alert(editId ? "Card Updated!" : "New Card Saved!");
+            needsRebuild = true;
             resetForm();
             loadAdminList();
             loadCards(document.querySelector('.filter-chip.active').innerText.toLowerCase());
